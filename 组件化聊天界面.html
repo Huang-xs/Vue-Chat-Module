@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>组件化聊天界面</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+
+        .msg {
+            position: relative;
+            max-width: 200px;
+            word-break: break-all;
+            border: 1px solid #b2b2b2;
+            background-color: #ddd;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .msgLine {
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .fl {
+            float: left;
+        }
+
+        .fr {
+            float: right;
+        }
+
+        #chatRoom {
+            width: 590px;
+            height: 490px;
+            /* border: 1px solid #b2b2b2; */
+            margin: 0 auto;
+            padding: 5px;
+            background: rgb(143,143,227);
+background: -moz-linear-gradient(180deg, rgba(143,143,227,0.865983893557423) 50%, rgba(23,184,44,0.4318102240896359) 89%);
+background: -webkit-linear-gradient(180deg, rgba(143,143,227,0.865983893557423) 50%, rgba(23,184,44,0.4318102240896359) 89%);
+background: linear-gradient(180deg, rgba(143,143,227,0.865983893557423) 50%, rgba(23,184,44,0.4318102240896359) 89%);
+filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#8f8fe3",endColorstr="#17b82c",GradientType=1);
+        }
+
+        .showMsg {
+            height: 400px;
+            margin-bottom: 5px;
+            background-color: bisque;
+            overflow-y: auto;
+
+        }
+
+        .showMsg::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .showMsg::-webkit-scrollbar-thumb {
+            border-radius: 1px;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .showMsg::-webkit-scrollbar-track {
+            border-radius: 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .sendMsg {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .sendMsg>div {
+            float: left;
+        }
+
+        .inputarea {
+            resize: none;
+            outline: none;
+            width: 450px;
+            height: 80px;
+            border: 1px solid #b2b2b2;
+            font-size: 20px;
+        }
+
+        .btn {
+            width: 133px;
+            height: 85px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .btn:hover {
+            background-color: lawngreen;
+            transition: all .2s linear;
+        }
+
+        .arrowRight {
+            position: absolute;
+            right: -9px;
+            top: 7px;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-left: 4px solid #b2b2b2 !important;
+        }
+
+        .arrowLeft {
+            position: absolute;
+            left: -9px;
+            top: 7px;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-right: 4px solid #b2b2b2;
+            border-left: 4px solid transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chatRoom">
+        <!-- 聊天内容展示界面 -->
+        <show-chat :bubble="msgArr"></show-chat>
+        <!-- 输入或发送信息 -->
+        <send-msg @text-data="addMsg" @text-data1="addMsg"></send-msg>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.0"></script>
+    <script>
+        // 气泡组件
+        const ChatMsg = {
+            props: ["index"],
+            template: `
+                        <div class="msgLine">
+                            <div  class="msg" :class="{fr:index.local}">{{index.msg}}<div :class="index.local?'arrowRight':'arrowLeft'"></div></div>
+                        </div>
+                    `
+        }
+        // 展示聊天界面组件
+        const ShowChat = {
+            props: ["bubble"],
+            template: `
+                    <div class="showMsg" id="showMsg">
+                            <chat-msg v-for="index in bubble" :key="index.id"  :index="index"></chat-msg>
+                    </div>`,
+            components: {
+                ChatMsg
+            }
+        }
+
+        // 发送信息组件
+        const SendMsg = {
+            template: `
+            <div class="sendMsg">
+                <div class="inputMsg">
+                    <textarea class="inputarea" v-model.trim="text" @keyup.alt.s="sendMassage"></textarea>   
+                </div>
+                <div class="sendBtn">
+                    <button class="btn" @click="sendMassage($event)" >发送<br/>(alt+s)</button> 
+                </div>
+            </div>`,
+            data() {
+                return {
+                    text: ""
+                }
+            },
+            methods: {
+                sendMassage(evt) {
+                    console.log(this.text);
+                    if (!this.text) {
+                        return;
+                    }
+                    console.log(this.text);
+                    let msg = { id: new Date().getTime(), msg: this.text, local: true }
+                    this.$emit("text-data", msg);
+                    this.text = ""
+
+                    setTimeout(() => {
+                        this.$emit("text-data", {
+                            id: new Date().getTime(), msg: "我太难了", local: false
+                        })
+                    }, 500);
+                }
+            }
+        }
+        // 左边的消息为电脑：left
+        // 右边的消息为我：right
+        new Vue({
+            el: "#chatRoom",
+            data: {
+                msgArr: [
+                    { id: 0, msg: "大家好", local: true },
+                    { id: 1, msg: "好", local: false }]
+            },
+            methods: {
+                addMsg(msg) {
+                    this.msgArr.push(msg)
+                    console.log(this.msgArr);
+                },
+            },
+            components: {
+                ShowChat,
+                SendMsg
+            },
+        })
+    </script>
+</body>
+
+</html>
